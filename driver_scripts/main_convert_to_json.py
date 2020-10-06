@@ -5,7 +5,7 @@ import json
 if __name__ == "__main__":
     scripts_root = "../sql_scripts/"
 
-    # Initialize a blank dictionary
+    # Initialize an empty dictionary for storing the tables and their column names
     schema = dict()
 
     # Initialize regex
@@ -41,14 +41,17 @@ if __name__ == "__main__":
                     # table name from the from clause
                     tablename = re.findall(r'\'(.+?)\'', clauses[2])[-1]
 
-                    # column names from where clauses
+                    # column names from where clause
                     parts = re.split(regex_pattern_cond_ops, clauses[3])
 
                     for part in parts:
                         columns.add(part.split()[1] if part.split()[0].lower() == 'not' else part.split()[0])
 
                     # add the table and its column names to the dictionary
-                    schema[tablename] = list(columns)
+                    if tablename in schema:
+                        schema[tablename] = list(columns.union(set(schema[tablename])))
+                    else:
+                        schema[tablename] = list(columns)
 
     # Dump the dictionary to a json file to be read later programmatically by an ETL pipeline
     with open('../result/legacy.json', 'w') as fp:
